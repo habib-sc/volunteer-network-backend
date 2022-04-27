@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config()
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 
 const app = express()
@@ -9,21 +10,62 @@ const app = express()
 app.use(cors());
 app.use(express.json());
 
-
+// Root Endpoint 
 app.get('/', (req, res) => {
     res.send('Volunteer Network Server');
 });
 
 
-
-const { MongoClient, ServerApiVersion } = require('mongodb');
+// DB Connection info 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@volunteernetwork.dv1mu.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 async function run () {
     try {
+        // Connecting db 
         await client.connect();
-        console.log('Database Connected');
+        const eventsCollection = client.db('VolunteerNetwork').collection('Events');
+
+        // Events get endpoint -- http://localhost:5000/events
+        app.get('/events', async (req, res) => {
+            const query = {}
+            const cursor = eventsCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        });
+
+        // Event post endpoint -- http://localhost:5000/event/add
+        app.post('/event/add', async(req, res) => {
+            const event = req.body;
+            const result = await eventsCollection.insertOne(event);
+            res.send(result);
+        });
+
+        // Event Update endpoint -- http://localhost:5000/event/edit/id
+        app.put('/event/edit/:id', async(req, res) => {
+            const id = req.params.id;
+            const data = req.body;
+            const filter = {_id: ObjectId(id)};
+            const options = { upsert: true}
+            const updateDocument = {
+                $set: {
+                   title: data.title,
+                   text: data.text,
+                   img: data.img
+                },
+            }
+            const result = await eventsCollection.updateOne(filter, updateDocument, options);
+            res.send(result);
+        });
+
+        // Event Delete endpoint -- http://localhost:5000/event/delete/id
+        app.delete('/event/delete/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = {_id: ObjectId(id)};
+            const result = await eventsCollection.deleteOne(query);
+            res.send(result);
+        });
+
     }
     finally {
 
