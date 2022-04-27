@@ -25,6 +25,7 @@ async function run () {
         // Connecting db 
         await client.connect();
         const eventsCollection = client.db('VolunteerNetwork').collection('Events');
+        const usersCollection = client.db('VolunteerNetwork').collection('Users');
 
         // Events get endpoint -- http://localhost:5000/events
         app.get('/events', async (req, res) => {
@@ -34,10 +35,25 @@ async function run () {
             res.send(result);
         });
 
+        // Users get endpoint -- http://localhost:5000/users
+        app.get('/users', async (req, res) => {
+            const query = {}
+            const cursor = usersCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        });
+
         // Event post endpoint -- http://localhost:5000/event/add
         app.post('/event/add', async(req, res) => {
             const event = req.body;
             const result = await eventsCollection.insertOne(event);
+            res.send(result);
+        });
+        
+        // User post endpoint -- http://localhost:5000/new-user
+        app.post('/new-user', async(req, res) => {
+            const event = req.body;
+            const result = await usersCollection.insertOne(event);
             res.send(result);
         });
 
