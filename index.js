@@ -57,6 +57,15 @@ async function run () {
             res.send(result);
         });
 
+
+        // User detail endpoint -- http://localhost:5000/user/email
+        app.get('/user/:email', async(req, res) => {
+            const email = req.params.email;
+            const query = {email: email};
+            const result = await usersCollection.findOne(query);
+            res.send(result);
+        });
+
         // Event Update endpoint -- http://localhost:5000/event/edit/id
         app.put('/event/edit/:id', async(req, res) => {
             const id = req.params.id;
